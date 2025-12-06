@@ -6,11 +6,20 @@ import QuizQuestionCard from "./QuizQuestionCard.jsx";
 function ResultTabs({ activeTab, setActiveTab, summary, quiz }) {
   // For quiz answers per question
   const [selectedAnswers, setSelectedAnswers] = useState({});
+  // For flashcard flips per card
+  const [flippedCards, setFlippedCards] = useState({});
 
   const handleAnswer = (questionKey, optionIndex) => {
     setSelectedAnswers((prev) => ({
       ...prev,
       [questionKey]: optionIndex,
+    }));
+  };
+
+  const handleFlip = (cardKey) => {
+    setFlippedCards((prev) => ({
+      ...prev,
+      [cardKey]: !prev[cardKey],
     }));
   };
 
@@ -21,6 +30,7 @@ function ResultTabs({ activeTab, setActiveTab, summary, quiz }) {
         {[
           { id: "summary", label: "Summary" },
           { id: "quiz", label: "Quiz" },
+          { id: "flashcards", label: "Flash Cards" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -46,7 +56,7 @@ function ResultTabs({ activeTab, setActiveTab, summary, quiz }) {
 
       {/* Content */}
       <div className="flex-1 overflow-hidden">
-        {activeTab === "summary" ? (
+        {activeTab === "summary" && (
           <div className="p-4 sm:p-5 h-full overflow-auto custom-scrollbar">
             {summary ? (
               <article className="prose prose-invert prose-sm max-w-none">
@@ -80,7 +90,9 @@ function ResultTabs({ activeTab, setActiveTab, summary, quiz }) {
               />
             )}
           </div>
-        ) : (
+        )}
+
+        {activeTab === "quiz" && (
           <div className="p-4 sm:p-5 h-full overflow-auto custom-scrollbar space-y-3">
             {quiz && quiz.length > 0 ? (
               quiz.map((q, index) => (
@@ -96,6 +108,69 @@ function ResultTabs({ activeTab, setActiveTab, summary, quiz }) {
               <EmptyState
                 title="Quiz not generated"
                 description="After summarizing or adding notes, click 'Generate Quiz' to get MCQs based on your content."
+              />
+            )}
+          </div>
+        )}
+
+        {activeTab === "flashcards" && (
+          <div className="p-4 sm:p-5 h-full overflow-auto custom-scrollbar space-y-3">
+            {quiz && quiz.length > 0 ? (
+              quiz.map((q, index) => {
+                const isFlipped = flippedCards[index];
+                return (
+                  <div
+                    key={index}
+                    className="rounded-2xl border border-slate-800 bg-slate-950/60 px-4 py-3 sm:px-5 sm:py-4 flex flex-col gap-2 shadow-[0_0_25px_rgba(15,23,42,0.8)]"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] text-slate-500">
+                        Card {index + 1} of {quiz.length}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleFlip(index)}
+                        className="text-[11px] px-2 py-1 rounded-lg border border-indigo-500/60 text-indigo-100 hover:bg-indigo-500/15 transition"
+                      >
+                        {isFlipped ? "Hide Answer" : "Show Answer"}
+                      </button>
+                    </div>
+
+                    {/* FRONT: Question */}
+                    <div className="mt-1">
+                      <p className="text-sm font-medium text-slate-100">
+                        {q.question}
+                      </p>
+                      {!isFlipped && (
+                        <p className="mt-1 text-[11px] text-slate-500">
+                          Think of the answer before flipping →
+                        </p>
+                      )}
+                    </div>
+
+                    {/* BACK: Answer & Explanation */}
+                    {isFlipped && (
+                      <div className="mt-2 rounded-xl bg-slate-900/80 border border-emerald-500/40 px-3 py-2">
+                        <p className="text-xs text-emerald-300 font-semibold">
+                          Answer:{" "}
+                          <span className="text-emerald-100">
+                            {q.answer || q.options?.[q.answerIndex]}
+                          </span>
+                        </p>
+                        {q.explanation && (
+                          <p className="mt-1 text-[11px] text-slate-300 leading-snug">
+                            {q.explanation}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <EmptyState
+                title="No flash cards yet"
+                description="First generate a quiz. We'll turn each question into a flip-card to help you revise quickly."
               />
             )}
           </div>
